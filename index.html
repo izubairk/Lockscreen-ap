@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Unlock</title>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: black;
+  font-family: -apple-system, BlinkMacSystemFont;
+  overflow: hidden;
+  color: white;
+}
+
+#lockscreen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#time {
+  font-size: 64px;
+  margin-top: 80px;
+}
+
+#date {
+  font-size: 18px;
+  opacity: 0.8;
+}
+
+#dots {
+  display: flex;
+  gap: 12px;
+  margin: 40px 0;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid white;
+}
+
+.dot.filled {
+  background: white;
+}
+
+#keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 80px);
+  gap: 15px;
+}
+
+.key {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+#hint {
+  margin-top: 20px;
+  font-size: 14px;
+  opacity: 0.5;
+}
+</style>
+</head>
+
+<body>
+
+<div id="lockscreen">
+  <div id="time">00:00</div>
+  <div id="date"></div>
+
+  <div id="dots"></div>
+
+  <div id="keypad"></div>
+
+  <div id="hint">Swipe up to unlock</div>
+</div>
+
+<script>
+let pin = "";
+let revealMode = false;
+let revealTimer = null;
+
+const timeEl = document.getElementById("time");
+const dateEl = document.getElementById("date");
+const dotsEl = document.getElementById("dots");
+const keypadEl = document.getElementById("keypad");
+
+function updateClock() {
+  if (revealMode) return;
+  const now = new Date();
+  timeEl.textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  dateEl.textContent = now.toDateString();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function buildDots() {
+  dotsEl.innerHTML = "";
+  for (let i = 0; i < 4; i++) {
+    const d = document.createElement("div");
+    d.className = "dot";
+    dotsEl.appendChild(d);
+  }
+}
+buildDots();
+
+function updateDots() {
+  [...dotsEl.children].forEach((d,i)=>{
+    d.classList.toggle("filled", i < pin.length);
+  });
+}
+
+function buildKeypad() {
+  keypadEl.innerHTML = "";
+  for (let i = 1; i <= 9; i++) addKey(i);
+  addKey("");
+  addKey(0);
+  addKey("");
+}
+
+function addKey(n) {
+  const k = document.createElement("div");
+  k.className = "key";
+  k.textContent = n;
+  if (n !== "") {
+    k.onclick = () => {
+      if (pin.length < 4) {
+        pin += n;
+        updateDots();
+      }
+    };
+  }
+  keypadEl.appendChild(k);
+}
+buildKeypad();
+
+/* 🔥 SECRET REVEAL (LONG PRESS ON TIME) */
+timeEl.addEventListener("touchstart", () => {
+  revealTimer = setTimeout(() => {
+    if (pin.length === 4) {
+      revealMode = true;
+      timeEl.textContent = pin.slice(0,2) + ":" + pin.slice(2);
+    }
+  }, 1500);
+});
+
+timeEl.addEventListener("touchend", () => {
+  clearTimeout(revealTimer);
+  revealMode = false;
+  updateClock();
+});
+</script>
+
+</body>
+</html>
